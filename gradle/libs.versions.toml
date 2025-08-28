@@ -1,0 +1,57 @@
+
+[versions]
+agp = "8.12.1"
+kotlin = "2.0.21" # Esta versión también se usará para kapt
+coreKtx = "1.17.0"
+junit = "4.13.2"
+junitVersion = "1.3.0"
+espressoCore = "3.7.0"
+lifecycleRuntimeKtx = "2.9.2"
+activityCompose = "1.10.1"
+composeBom = "2024.09.00"
+navigationRuntimeKtx = "2.9.3"
+navigationCompose = "2.9.3"
+datastoreCore = "1.1.7"
+datastorePreferences = "1.1.7"
+# ... (tus otras bibliotecas)
+androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core", version.ref = "datastoreCore" }
+# --- AÑADE ESTA LÍNEA ---
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastorePreferences" }
+datastorePreferencesCore = "1.1.7"
+roomCommonJvm = "2.7.2"
+roomKtx = "2.7.2"
+
+
+
+
+[libraries]
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" } # Plataforma BOM para Compose
+androidx-ui = { group = "androidx.compose.ui", name = "ui" } # Depende del BOM
+androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" } # Depende del BOM
+androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" } # Depende del BOM
+androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" } # Depende del BOM
+androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" } # Depende del BOM
+androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" } # Depende del BOM
+androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-navigation-runtime-ktx = { group = "androidx.navigation", name = "navigation-runtime-ktx", version.ref = "navigationRuntimeKtx" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core", version.ref = "datastoreCore" } # Depende del BOM
+# ... (tus otras bibliotecas)
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastorePreferences" }
+androidx-datastore-preferences-core = { group = "androidx.datastore", name = "datastore-preferences-core", version.ref = "datastorePreferencesCore" }
+androidx-room-common-jvm = { group = "androidx.room", name = "room-common-jvm", version.ref = "roomCommonJvm" }
+androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomKtx" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+# --- LíNEA AÑADIDA ---
+kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
+# --- FIN LÍNEA AÑADIDA ---
