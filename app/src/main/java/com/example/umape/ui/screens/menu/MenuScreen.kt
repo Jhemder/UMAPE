@@ -39,6 +39,7 @@ fun MenuScreen(
     onNavigateToMultiplayer: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    onSwitchUser: () -> Unit,
     onLogout: () -> Unit
 ) {
     var selectedIndex by remember { mutableStateOf(-1) }
@@ -140,6 +141,7 @@ fun MenuScreen(
                     MenuItem("🎰 Tienda", "Gacha & Objetos", Icons.Default.ShoppingCart, onNavigateToShop),
                     MenuItem("👤 Perfil", "Mi Progreso", Icons.Default.Person, onNavigateToProfile),
                     MenuItem("⚙️ Opciones", "Configuración", Icons.Default.Settings, onNavigateToSettings),
+                    MenuItem("🔄 Cambiar Usuario", "Otra Cuenta", Icons.Default.SwapHoriz, onSwitchUser),
                     MenuItem("🚪 Salir", "Cerrar Sesión", Icons.Default.ExitToApp) {
                         showLogoutDialog = true
                     }

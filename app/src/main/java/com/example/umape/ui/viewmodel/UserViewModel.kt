@@ -29,8 +29,12 @@ class UserViewModel(private val repository: UserRepository) : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _availableUsers = MutableStateFlow<List<UserEntity>>(emptyList())
+    val availableUsers: StateFlow<List<UserEntity>> = _availableUsers.asStateFlow()
+
     init {
         checkIfFirstTimeUser()
+        loadAvailableUsers()
     }
 
     private fun checkIfFirstTimeUser() {
@@ -39,7 +43,18 @@ class UserViewModel(private val repository: UserRepository) : ViewModel() {
         }
     }
 
-    fun registerUser(name: String, password: String, language: String = "es", onResult: (Boolean) -> Unit) {
+    private fun loadAvailableUsers() {
+        viewModelScope.launch {
+            try {
+                _availableUsers.value = repository.getAllUsers()
+            } catch (e: Exception) {
+                // Manejar error silenciosamente
+                _availableUsers.value = emptyList()
+            }
+        }
+    }
+
+    fun registerUser(name: String, password: String, language: String = "es", onResult: (Boolean, String?) -> Unit) {
         viewModelScope.launch {
             _isLoading.value = true
             _loginError.value = null
@@ -47,32 +62,68 @@ class UserViewModel(private val repository: UserRepository) : ViewModel() {
             repository.registerUser(name, password, language)
                 .onSuccess {
                     _isFirstTimeUser.value = false
-                    onResult(true)
+                    loadAvailableUsers()
+                    onResult(true, null)
                 }
                 .onFailure { error ->
-                    _loginError.value = error.message ?: "Error desconocido"
-                    onResult(false)
+                    val errorMessage = error.message ?: "Error desconocido"
+                    _loginError.value = errorMessage
+                    onResult(false, errorMessage)
                 }
 
             _isLoading.value = false
         }
     }
 
-    fun loginUser(name: String, password: String, onResult: (Boolean) -> Unit) {
+    fun loginUser(name: String, password: String, onResult: (Boolean, String?) -> Unit) {
         viewModelScope.launch {
             _isLoading.value = true
             _loginError.value = null
 
             repository.loginUser(name, password)
                 .onSuccess {
-                    onResult(true)
+                    loadAvailableUsers()
+                    onResult(true, null)
                 }
                 .onFailure { error ->
-                    _loginError.value = error.message ?: "Error de login"
-                    onResult(false)
+                    val errorMessage = error.message ?: "Error de login"
+                    _loginError.value = errorMessage
+                    onResult(false, errorMessage)
                 }
 
             _isLoading.value = false
+        }
+    }
+
+    fun switchUser(user: UserEntity, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            try {
+                // Actualizar lastPlayed del usuario seleccionado
+                repository.updateLastPlayed(user.id)
+                onResult(true)
+            } catch (e: Exception) {
+                onResult(false)
+            }
+        }
+    }
+
+    fun logout(onResult: (Boolean) -> Unit = {}) {
+        viewModelScope.launch {
+            try {
+                // Llamar al método logout del repositorio
+                repository.logout()
+                    .onSuccess {
+                        // Limpiar estados locales
+                        _loginError.value = null
+                        _isLoading.value = false
+                        onResult(true)
+                    }
+                    .onFailure {
+                        onResult(false)
+                    }
+            } catch (e: Exception) {
+                onResult(false)
+            }
         }
     }
 
@@ -114,12 +165,5 @@ class UserViewModel(private val repository: UserRepository) : ViewModel() {
                     onResult(false, error.message)
                 }
         }
-    }
-
-    fun logout() {
-        // Simplemente limpiamos el estado
-        // El currentUser se actualizará automáticamente via Flow
-        _loginError.value = null
-        _isLoading.value = false
     }
 }

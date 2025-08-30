@@ -82,9 +82,20 @@ class UserRepository(private val userDao: UserDao) {
         }
     }
 
-    suspend fun logout() {
-        // Aquí podrías limpiar datos específicos de sesión si los hay
-        // Por ahora solo necesitamos que el Flow se actualice, lo cual sucede automáticamente
-        // cuando el usuario actual ya no está marcado como "actual"
+    suspend fun logout(): Result<Boolean> {
+        return try {
+            // Aquí puedes agregar lógica adicional de logout si necesitas
+            // Por ejemplo, limpiar datos temporales, cerrar conexiones, etc.
+
+            // Por ahora, el logout será manejado principalmente por el ViewModel
+            // que dejará de rastrear al usuario actual
+            Result.success(true)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getAllUsers(): List<UserEntity> {
+        return userDao.getAllUsers()
     }
 }

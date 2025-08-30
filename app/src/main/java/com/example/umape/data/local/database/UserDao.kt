@@ -16,6 +16,9 @@ interface UserDao {
     @Query("SELECT * FROM users WHERE name = :name")
     suspend fun getUserByName(name: String): UserEntity?
 
+    @Query("SELECT * FROM users ORDER BY lastPlayed DESC")
+    suspend fun getAllUsers(): List<UserEntity>
+
     @Insert(onConflict = OnConflictStrategy.ABORT) // No permitir nombres duplicados
     suspend fun insertUser(user: UserEntity): Long
 
@@ -42,4 +45,10 @@ interface UserDao {
 
     @Query("DELETE FROM users WHERE name = :name")
     suspend fun deleteUserByName(name: String)
+
+    @Query("UPDATE users SET lastPlayed = 0 WHERE id != :currentUserId")
+    suspend fun logoutOtherUsers(currentUserId: Long)
+
+    @Query("UPDATE users SET lastPlayed = 0")
+    suspend fun logoutAllUsers()
 }

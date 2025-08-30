@@ -4,23 +4,25 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -34,7 +36,7 @@ import kotlin.math.sin
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    onLoginComplete: (String, String, Boolean) -> Unit // (nombre, contraseña, esRegistro)
+    onLoginComplete: (String, String, Boolean) -> Unit
 ) {
     var playerName by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -43,255 +45,399 @@ fun LoginScreen(
     var isLoading by remember { mutableStateOf(false) }
     var passwordVisible by remember { mutableStateOf(false) }
 
-    // Animaciones épicas
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
+    val screenWidth = configuration.screenWidthDp.dp
+    val isLandscape = screenWidth > screenHeight
+
+    // Animación sutil para el fondo
     val infiniteTransition = rememberInfiniteTransition(label = "background")
     val animatedFloat by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 360f,
         animationSpec = infiniteRepeatable(
-            animation = tween(25000, easing = LinearEasing),
+            animation = tween(30000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
         label = "rotation"
     )
 
-    val scaleAnimation by animateFloatAsState(
-        targetValue = if (playerName.isNotBlank()) 1.02f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-        label = "scale"
-    )
+    val scrollState = rememberScrollState()
 
-    // Fondo con video simulado (partículas épicas)
+    // Fondo verde similar al MenuScreen
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black) // Fondo negro base para el "video"
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF7ED321), // Verde claro
+                        Color(0xFF5CB85C), // Verde medio
+                        Color(0xFF4A9E4A)  // Verde oscuro
+                    )
+                )
+            )
     ) {
-        // Simulación de video de fondo con partículas dinámicas
-        EpicVideoBackground(animatedFloat)
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+        // Fondo animado muy sutil
+        Canvas(
+            modifier = Modifier.fillMaxSize()
         ) {
-            // Logo épico tipo DBZ
-            Card(
-                modifier = Modifier
-                    .scale(scaleAnimation)
-                    .animateContentSize(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.Black.copy(alpha = 0.7f)
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 20.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "🏇⚡",
-                        fontSize = 56.sp,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    )
+            repeat(20) { index ->
+                val angle = (animatedFloat + index * 18f) * Math.PI / 180
+                val radius = size.minDimension / 4
+                val centerX = size.width / 2
+                val centerY = size.height / 2
 
-                    Text(
-                        text = "UMAPE",
-                        fontSize = 36.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFFFD700), // Dorado épico
-                        textAlign = TextAlign.Center
-                    )
+                val x = centerX + radius * cos(angle).toFloat() * 0.3f
+                val y = centerY + radius * sin(angle).toFloat() * 0.3f
 
-                    Text(
-                        text = "Ultimate Racing Championship",
-                        fontSize = 12.sp,
-                        color = Color.White.copy(alpha = 0.9f),
-                        textAlign = TextAlign.Center,
-                        lineHeight = 16.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
+                drawCircle(
+                    color = Color.White.copy(alpha = 0.08f),
+                    radius = 3f,
+                    center = Offset(x, y)
+                )
             }
+        }
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Toggle entre Login y Registro
+        if (isLandscape) {
+            // Layout horizontal: dos columnas
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 32.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                    .fillMaxSize()
+                    .padding(24.dp),
+                horizontalArrangement = Arrangement.spacedBy(24.dp)
             ) {
-                TabButton(
-                    text = "ENTRAR",
-                    isSelected = !isRegisterMode,
-                    onClick = { isRegisterMode = false }
-                )
-                TabButton(
-                    text = "REGISTRARSE",
-                    isSelected = isRegisterMode,
-                    onClick = { isRegisterMode = true }
-                )
-            }
+                // Columna izquierda: Logo y bienvenida
+                Column(
+                    modifier = Modifier
+                        .weight(0.4f)
+                        .fillMaxHeight(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    WelcomeSection(isCompact = true)
+                }
 
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Formulario animado
-            AnimatedVisibility(
-                visible = !isLoading,
-                enter = slideInVertically() + fadeIn(),
-                exit = slideOutVertically() + fadeOut()
-            ) {
-                Column {
-                    // Campo de nombre
-                    OutlinedTextField(
-                        value = playerName,
-                        onValueChange = { playerName = it },
-                        label = {
-                            Text(
-                                if (isRegisterMode) "Nombre del Entrenador" else "Nombre de Usuario",
-                                color = Color(0xFFFFD700)
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .animateContentSize(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFFFFD700),
-                            unfocusedBorderColor = Color.White.copy(alpha = 0.7f),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White.copy(alpha = 0.9f)
-                        )
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Campo de contraseña
-                    OutlinedTextField(
-                        value = password,
-                        onValueChange = { password = it },
-                        label = { Text("Contraseña", color = Color(0xFFFFD700)) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .animateContentSize(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        singleLine = true,
-                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        trailingIcon = {
-                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                Icon(
-                                    imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                    contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña",
-                                    tint = Color(0xFFFFD700)
-                                )
-                            }
-                        },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFFFFD700),
-                            unfocusedBorderColor = Color.White.copy(alpha = 0.7f),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White.copy(alpha = 0.9f)
-                        )
-                    )
-
-                    if (isRegisterMode) {
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // Selector de idioma solo en registro
-                        var expanded by remember { mutableStateOf(false) }
-                        val languages = mapOf(
-                            "es" to "🇪🇸 Español",
-                            "en" to "🇺🇸 English",
-                            "ja" to "🇯🇵 日本語"
-                        )
-
-                        ExposedDropdownMenuBox(
-                            expanded = expanded,
-                            onExpandedChange = { expanded = !expanded }
-                        ) {
-                            OutlinedTextField(
-                                value = languages[selectedLanguage] ?: "🇪🇸 Español",
-                                onValueChange = {},
-                                readOnly = true,
-                                label = { Text("Idioma", color = Color(0xFFFFD700)) },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .menuAnchor(),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color(0xFFFFD700),
-                                    unfocusedBorderColor = Color.White.copy(alpha = 0.7f),
-                                    focusedTextColor = Color.White,
-                                    unfocusedTextColor = Color.White.copy(alpha = 0.9f)
-                                )
-                            )
-
-                            ExposedDropdownMenu(
-                                expanded = expanded,
-                                onDismissRequest = { expanded = false },
-                                modifier = Modifier.background(Color.Black.copy(alpha = 0.9f))
-                            ) {
-                                languages.forEach { (code, name) ->
-                                    DropdownMenuItem(
-                                        text = { Text(name, color = Color.White) },
-                                        onClick = {
-                                            selectedLanguage = code
-                                            expanded = false
-                                        },
-                                        colors = MenuDefaults.itemColors(
-                                            textColor = Color.White
-                                        )
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(30.dp))
-
-                    // Botón épico estilo DBZ
-                    Button(
-                        onClick = {
+                // Columna derecha: Formulario
+                Column(
+                    modifier = Modifier
+                        .weight(0.6f)
+                        .fillMaxHeight()
+                        .verticalScroll(scrollState),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    LoginForm(
+                        playerName = playerName,
+                        password = password,
+                        isRegisterMode = isRegisterMode,
+                        selectedLanguage = selectedLanguage,
+                        passwordVisible = passwordVisible,
+                        isLoading = isLoading,
+                        isCompact = true,
+                        onPlayerNameChange = { playerName = it },
+                        onPasswordChange = { password = it },
+                        onModeChange = { isRegisterMode = it },
+                        onLanguageChange = { selectedLanguage = it },
+                        onPasswordVisibilityChange = { passwordVisible = it },
+                        onSubmit = {
                             if (playerName.isNotBlank() && password.isNotBlank()) {
                                 isLoading = true
                                 onLoginComplete(playerName, password, isRegisterMode)
                             }
+                        }
+                    )
+                }
+            }
+        } else {
+            // Layout vertical: una sola columna
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
+                Spacer(modifier = Modifier.height(20.dp))
+
+                WelcomeSection()
+
+                LoginForm(
+                    playerName = playerName,
+                    password = password,
+                    isRegisterMode = isRegisterMode,
+                    selectedLanguage = selectedLanguage,
+                    passwordVisible = passwordVisible,
+                    isLoading = isLoading,
+                    onPlayerNameChange = { playerName = it },
+                    onPasswordChange = { password = it },
+                    onModeChange = { isRegisterMode = it },
+                    onLanguageChange = { selectedLanguage = it },
+                    onPasswordVisibilityChange = { passwordVisible = it },
+                    onSubmit = {
+                        if (playerName.isNotBlank() && password.isNotBlank()) {
+                            isLoading = true
+                            onLoginComplete(playerName, password, isRegisterMode)
+                        }
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun WelcomeSection(isCompact: Boolean = false) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.95f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(if (isCompact) 20.dp else 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Logo simple
+            Text(
+                text = "🏇",
+                fontSize = if (isCompact) 48.sp else 64.sp,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            Text(
+                text = "UMAPE",
+                fontSize = if (isCompact) 28.sp else 32.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF2E7D32),
+                textAlign = TextAlign.Center
+            )
+
+            Text(
+                text = "Racing Championship",
+                fontSize = if (isCompact) 14.sp else 16.sp,
+                color = Color(0xFF666666),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+
+            if (!isCompact) {
+                Text(
+                    text = "¡Bienvenido entrenador! Prepárate para la carrera definitiva",
+                    fontSize = 14.sp,
+                    color = Color(0xFF666666),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 12.dp),
+                    lineHeight = 18.sp
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LoginForm(
+    playerName: String,
+    password: String,
+    isRegisterMode: Boolean,
+    selectedLanguage: String,
+    passwordVisible: Boolean,
+    isLoading: Boolean,
+    isCompact: Boolean = false,
+    onPlayerNameChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onModeChange: (Boolean) -> Unit,
+    onLanguageChange: (String) -> Unit,
+    onPasswordVisibilityChange: (Boolean) -> Unit,
+    onSubmit: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.95f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(if (isCompact) 20.dp else 24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Toggle entre Login y Registro
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ModeButton(
+                    text = "Entrar",
+                    isSelected = !isRegisterMode,
+                    onClick = { onModeChange(false) },
+                    modifier = Modifier.weight(1f),
+                    isCompact = isCompact
+                )
+                ModeButton(
+                    text = "Registrarse",
+                    isSelected = isRegisterMode,
+                    onClick = { onModeChange(true) },
+                    modifier = Modifier.weight(1f),
+                    isCompact = isCompact
+                )
+            }
+
+            // Campos del formulario
+            OutlinedTextField(
+                value = playerName,
+                onValueChange = onPlayerNameChange,
+                label = {
+                    Text(
+                        if (isRegisterMode) "Nombre del Entrenador" else "Usuario",
+                        fontSize = if (isCompact) 14.sp else 16.sp
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Person,
+                        contentDescription = null,
+                        tint = Color(0xFF4CAF50)
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF4CAF50),
+                    unfocusedBorderColor = Color(0xFF999999),
+                    focusedLabelColor = Color(0xFF4CAF50),
+                    unfocusedLabelColor = Color(0xFF666666)
+                )
+            )
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = onPasswordChange,
+                label = {
+                    Text(
+                        "Contraseña",
+                        fontSize = if (isCompact) 14.sp else 16.sp
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Lock,
+                        contentDescription = null,
+                        tint = Color(0xFF4CAF50)
+                    )
+                },
+                trailingIcon = {
+                    IconButton(onClick = { onPasswordVisibilityChange(!passwordVisible) }) {
+                        Icon(
+                            if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                            contentDescription = if (passwordVisible) "Ocultar" else "Mostrar",
+                            tint = Color(0xFF666666)
+                        )
+                    }
+                },
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF4CAF50),
+                    unfocusedBorderColor = Color(0xFF999999),
+                    focusedLabelColor = Color(0xFF4CAF50),
+                    unfocusedLabelColor = Color(0xFF666666)
+                )
+            )
+
+            if (isRegisterMode) {
+                var expanded by remember { mutableStateOf(false) }
+                val languages = mapOf(
+                    "es" to "🇪🇸 Español",
+                    "en" to "🇺🇸 English",
+                    "ja" to "🇯🇵 日本語"
+                )
+
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = !expanded }
+                ) {
+                    OutlinedTextField(
+                        value = languages[selectedLanguage] ?: "🇪🇸 Español",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = {
+                            Text(
+                                "Idioma",
+                                fontSize = if (isCompact) 14.sp else 16.sp
+                            )
                         },
-                        enabled = playerName.isNotBlank() && password.isNotBlank() && !isLoading,
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.Language,
+                                contentDescription = null,
+                                tint = Color(0xFF4CAF50)
+                            )
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(52.dp)
-                            .animateContentSize(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFFFD700),
-                            disabledContainerColor = Color(0xFFFFD700).copy(alpha = 0.5f)
-                        ),
-                        shape = RoundedCornerShape(16.dp),
-                        elevation = ButtonDefaults.buttonElevation(
-                            defaultElevation = 12.dp,
-                            pressedElevation = 6.dp
+                            .menuAnchor(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF4CAF50),
+                            unfocusedBorderColor = Color(0xFF999999),
+                            focusedLabelColor = Color(0xFF4CAF50),
+                            unfocusedLabelColor = Color(0xFF666666)
                         )
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                        modifier = Modifier.background(Color.White)
                     ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(28.dp),
-                                color = Color.Black,
-                                strokeWidth = 3.dp
-                            )
-                        } else {
-                            Text(
-                                if (isRegisterMode) "⚡ CREAR LEYENDA ⚡" else "🚀 ENTRAR AL TORNEO 🚀",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.Black
+                        languages.forEach { (code, name) ->
+                            DropdownMenuItem(
+                                text = { Text(name, color = Color(0xFF333333)) },
+                                onClick = {
+                                    onLanguageChange(code)
+                                    expanded = false
+                                }
                             )
                         }
                     }
+                }
+            }
+
+            // Botón de acción
+            Button(
+                onClick = onSubmit,
+                enabled = playerName.isNotBlank() && password.isNotBlank() && !isLoading,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(if (isCompact) 44.dp else 48.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF4CAF50),
+                    disabledContainerColor = Color(0xFF4CAF50).copy(alpha = 0.5f)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(if (isCompact) 20.dp else 24.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        if (isRegisterMode) "Crear Cuenta" else "Iniciar Sesión",
+                        fontSize = if (isCompact) 14.sp else 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.White
+                    )
                 }
             }
         }
@@ -299,98 +445,29 @@ fun LoginScreen(
 }
 
 @Composable
-private fun TabButton(
+private fun ModeButton(
     text: String,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    isCompact: Boolean = false
 ) {
-    Card(
+    Button(
         onClick = onClick,
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected)
-                Color(0xFFFFD700).copy(alpha = 0.9f)
-            else
-                Color.Black.copy(alpha = 0.6f)
+        modifier = modifier.height(if (isCompact) 36.dp else 40.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isSelected) Color(0xFF4CAF50) else Color.Transparent,
+            contentColor = if (isSelected) Color.White else Color(0xFF4CAF50)
         ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = if (isSelected) 8.dp else 4.dp
-        ),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(8.dp),
+        elevation = ButtonDefaults.buttonElevation(
+            defaultElevation = if (isSelected) 4.dp else 0.dp
+        )
     ) {
         Text(
-            text = text,
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color = if (isSelected) Color.Black else Color.White
-        )
-    }
-}
-
-@Composable
-private fun EpicVideoBackground(rotation: Float) {
-    Canvas(
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
-        // Simulación de video con múltiples capas de efectos
-        drawVideoEffect(rotation)
-    }
-}
-
-private fun DrawScope.drawVideoEffect(rotation: Float) {
-    // Efecto de energía tipo DBZ
-    val particleCount = 80
-    repeat(particleCount) { index ->
-        val angle = (rotation + index * 360f / particleCount) * Math.PI / 180
-        val radius = size.minDimension / 2
-        val centerX = size.width / 2
-        val centerY = size.height / 2
-
-        val speed = 0.5f + (index % 3) * 0.3f
-        val x = centerX + radius * cos(angle).toFloat() * speed
-        val y = centerY + radius * sin(angle).toFloat() * speed
-
-        // Partículas doradas
-        drawCircle(
-            color = Color(0xFFFFD700).copy(alpha = 0.4f),
-            radius = 1.5f + (index % 3),
-            center = Offset(x, y)
-        )
-
-        // Partículas azules
-        val blueAngle = (-rotation + index * 180f / particleCount) * Math.PI / 180
-        val blueX = centerX + radius * cos(blueAngle).toFloat() * 0.7f
-        val blueY = centerY + radius * sin(blueAngle).toFloat() * 0.7f
-
-        drawCircle(
-            color = Color(0xFF0080FF).copy(alpha = 0.3f),
-            radius = 2f,
-            center = Offset(blueX, blueY)
-        )
-    }
-
-    // Líneas de energía
-    repeat(12) { index ->
-        val lineAngle = (rotation * 2 + index * 30f) * Math.PI / 180
-        val startRadius = 50f
-        val endRadius = size.minDimension / 3
-
-        val startX = size.width / 2 + startRadius * cos(lineAngle).toFloat()
-        val startY = size.height / 2 + startRadius * sin(lineAngle).toFloat()
-        val endX = size.width / 2 + endRadius * cos(lineAngle).toFloat()
-        val endY = size.height / 2 + endRadius * sin(lineAngle).toFloat()
-
-        drawLine(
-            brush = Brush.linearGradient(
-                colors = listOf(
-                    Color(0xFFFFD700).copy(alpha = 0.6f),
-                    Color.Transparent
-                )
-            ),
-            start = Offset(startX, startY),
-            end = Offset(endX, endY),
-            strokeWidth = 2f
+            text,
+            fontSize = if (isCompact) 12.sp else 14.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
         )
     }
 }

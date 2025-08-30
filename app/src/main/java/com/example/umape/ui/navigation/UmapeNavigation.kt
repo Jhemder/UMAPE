@@ -11,6 +11,7 @@ import com.example.umape.data.local.database.UmapeDatabase
 import com.example.umape.data.repository.UserRepository
 import com.example.umape.ui.screens.login.LoginScreen
 import com.example.umape.ui.screens.menu.MenuScreen
+import com.example.umape.ui.screens.userselection.UserSelectionScreen
 import com.example.umape.ui.viewmodel.UserViewModel
 import com.example.umape.ui.screens.splash.SplashScreen
 import com.example.umape.ui.viewmodel.UserViewModelFactory
@@ -28,20 +29,17 @@ fun UmapeNavigation(
     )
 
     val currentUser by viewModel.currentUser.collectAsState()
+    val availableUsers by viewModel.availableUsers.collectAsState()
     val isFirstTimeUser by viewModel.isFirstTimeUser.collectAsState()
     var showSplash by remember { mutableStateOf(true) }
 
-    // Siempre empezar con splash
-    val startDestination = "splash"
-
     NavHost(
         navController = navController,
-        startDestination = startDestination
+        startDestination = "splash"
     ) {
         composable("splash") {
             SplashScreen {
                 showSplash = false
-                // Determinar siguiente pantalla después del splash
                 val nextDestination = if (currentUser == null) "login" else "menu"
                 navController.navigate(nextDestination) {
                     popUpTo("splash") { inclusive = true }
@@ -52,31 +50,51 @@ fun UmapeNavigation(
         composable("login") {
             LoginScreen { name, password, isRegister ->
                 if (isRegister) {
-                    // Modo registro - crear nuevo usuario
-                    viewModel.registerUser(name, password) { success ->
+                    viewModel.registerUser(name, password) { success, error ->
                         if (success) {
                             navController.navigate("menu") {
                                 popUpTo("login") { inclusive = true }
                             }
                         } else {
-                            // Manejar error de registro
-                            // TODO: Mostrar mensaje de error
+                            // TODO: Mostrar error (ya está en el ViewModel)
                         }
                     }
                 } else {
-                    // Modo login - verificar usuario existente
-                    viewModel.loginUser(name, password) { success ->
+                    viewModel.loginUser(name, password) { success, error ->
                         if (success) {
                             navController.navigate("menu") {
                                 popUpTo("login") { inclusive = true }
                             }
                         } else {
-                            // Manejar error de login
-                            // TODO: Mostrar mensaje de error
+                            // TODO: Mostrar error (ya está en el ViewModel)
                         }
                     }
                 }
             }
+        }
+
+        composable("user_selection") {
+            UserSelectionScreen(
+                users = availableUsers,
+                currentUser = currentUser,
+                onUserSelected = { user ->
+                    viewModel.switchUser(user) { success ->
+                        if (success) {
+                            navController.navigate("menu") {
+                                popUpTo("user_selection") { inclusive = true }
+                            }
+                        }
+                    }
+                },
+                onCreateNewUser = {
+                    navController.navigate("login")
+                },
+                onBackToMenu = {
+                    navController.navigate("menu") {
+                        popUpTo("user_selection") { inclusive = true }
+                    }
+                }
+            )
         }
 
         composable("menu") {
@@ -109,11 +127,16 @@ fun UmapeNavigation(
                         // TODO: Implementar navegación a perfil
                         // navController.navigate("profile")
                     },
+                    onSwitchUser = {
+                        // NUEVA FUNCIONALIDAD: Cambiar de usuario
+                        navController.navigate("user_selection")
+                    },
                     onLogout = {
-                        // Logout: volver al login
-                        viewModel.logout()
-                        navController.navigate("login") {
-                            popUpTo("menu") { inclusive = true }
+                        // Logout completo: volver al login
+                        viewModel.logout { success ->
+                            navController.navigate("login") {
+                                popUpTo("menu") { inclusive = true }
+                            }
                         }
                     }
                 )
