@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-
 class UserViewModel(private val repository: UserRepository) : ViewModel() {
 
     val currentUser: StateFlow<UserEntity?> = repository.getCurrentUser()
@@ -24,6 +23,12 @@ class UserViewModel(private val repository: UserRepository) : ViewModel() {
     private val _isFirstTimeUser = MutableStateFlow(true)
     val isFirstTimeUser: StateFlow<Boolean> = _isFirstTimeUser.asStateFlow()
 
+    private val _loginError = MutableStateFlow<String?>(null)
+    val loginError: StateFlow<String?> = _loginError.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     init {
         checkIfFirstTimeUser()
     }
@@ -34,11 +39,40 @@ class UserViewModel(private val repository: UserRepository) : ViewModel() {
         }
     }
 
-    fun createUser(name: String, language: String, onSuccess: () -> Unit) {
+    fun registerUser(name: String, password: String, language: String = "es", onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
-            repository.createUser(name, language)
-            _isFirstTimeUser.value = false
-            onSuccess()
+            _isLoading.value = true
+            _loginError.value = null
+
+            repository.registerUser(name, password, language)
+                .onSuccess {
+                    _isFirstTimeUser.value = false
+                    onResult(true)
+                }
+                .onFailure { error ->
+                    _loginError.value = error.message ?: "Error desconocido"
+                    onResult(false)
+                }
+
+            _isLoading.value = false
+        }
+    }
+
+    fun loginUser(name: String, password: String, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _loginError.value = null
+
+            repository.loginUser(name, password)
+                .onSuccess {
+                    onResult(true)
+                }
+                .onFailure { error ->
+                    _loginError.value = error.message ?: "Error de login"
+                    onResult(false)
+                }
+
+            _isLoading.value = false
         }
     }
 
@@ -46,5 +80,46 @@ class UserViewModel(private val repository: UserRepository) : ViewModel() {
         viewModelScope.launch {
             repository.updateLastPlayed(userId)
         }
+    }
+
+    fun addCoins(userId: Long, coins: Int) {
+        viewModelScope.launch {
+            repository.addCoins(userId, coins)
+        }
+    }
+
+    fun incrementGamesPlayed(userId: Long) {
+        viewModelScope.launch {
+            repository.incrementGamesPlayed(userId)
+        }
+    }
+
+    fun incrementRacesWon(userId: Long) {
+        viewModelScope.launch {
+            repository.incrementRacesWon(userId)
+        }
+    }
+
+    fun clearLoginError() {
+        _loginError.value = null
+    }
+
+    fun changePassword(userId: Long, oldPassword: String, newPassword: String, onResult: (Boolean, String?) -> Unit) {
+        viewModelScope.launch {
+            repository.changePassword(userId, oldPassword, newPassword)
+                .onSuccess {
+                    onResult(true, null)
+                }
+                .onFailure { error ->
+                    onResult(false, error.message)
+                }
+        }
+    }
+
+    fun logout() {
+        // Simplemente limpiamos el estado
+        // El currentUser se actualizará automáticamente via Flow
+        _loginError.value = null
+        _isLoading.value = false
     }
 }

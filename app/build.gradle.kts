@@ -1,18 +1,16 @@
 plugins {
-    // Aplica los plugins necesarios para este módulo de aplicación.
-    // Estos plugins ya fueron declarados (con 'apply false') en el build.gradle.kts raíz.
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.kapt)    // Aplicando el plugin kapt
-    alias(libs.plugins.kotlin.compose) // Si usas Jetpack Compose
+    alias(libs.plugins.kotlin.kapt)    // Para Room
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
-    namespace = "com.example.umape" // Reemplaza con tu namespace real
-    compileSdk = 36 // O la versión más reciente que quieras usar
+    namespace = "com.example.umape"
+    compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.umape" // Reemplaza con tu applicationId real
+        applicationId = "com.example.umape"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
@@ -41,13 +39,10 @@ android {
         jvmTarget = "1.8"
     }
     buildFeatures {
-        compose = true // Habilita Compose si lo estás usando
+        compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.composeBom.get() // Asumiendo que tienes composeBom en tu libs.versions.toml
-        // Si no tienes composeBom y tienes una versión específica para kotlinCompilerExtensionVersion
-        // podrías tener algo como: kotlinCompilerExtensionVersion = "1.5.3" (debe coincidir con tu versión de Compose y Kotlin)
-        // O referenciarla desde libs.versions.toml si tienes una versión específica allí para el compilador de compose.
+        kotlinCompilerExtensionVersion = "1.5.4"
     }
     packaging {
         resources {
@@ -60,37 +55,38 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.androidx.compose.bom)) // BOM de Compose
+    implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.runtime.ktx)
     implementation(libs.androidx.navigation.compose)
-    implementation(libs.androidx.datastore.core)
-    implementation(libs.androidx.datastore.preferences.core)
-    // DataStore Preferences
+
+    // DataStore
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation("androidx.datastore:datastore-core:1.1.1")
-// Animaciones avanzadas
+
+    // Room - AGREGADO Y CORREGIDO
+    implementation("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
+    kapt("androidx.room:room-compiler:2.6.1")
+
+    // Animaciones
     implementation("androidx.compose.animation:animation:1.5.4")
     implementation("androidx.compose.animation:animation-core:1.5.4")
 
-// Lottie para animaciones (opcional)
+    // Lottie
     implementation("com.airbnb.android:lottie-compose:6.1.0")
 
-// Coil para imágenes
+    // Coil
     implementation("io.coil-kt:coil-compose:2.5.0")
 
-// Corrutinas
+    // Corrutinas
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation(libs.androidx.room.common.jvm)
-    implementation(libs.androidx.room.ktx)
-    implementation("androidx.compose.material:material-icons-extended:<version>")
 
-    // Ejemplo de dependencia que podría usar kapt (como Room o Hilt)
-    // implementation("androidx.room:room-runtime:2.6.1")
-    // kapt("androidx.room:room-compiler:2.6.1")
+    // Material Icons Extended
+    implementation("androidx.compose.material:material-icons-extended:1.5.4")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

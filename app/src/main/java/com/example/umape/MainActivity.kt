@@ -8,13 +8,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.example.umape.ui.navigation.UmapeNavigation
-import com.example.umape.ui.theme.UmapeTheme
+import com.example.umape.ui.theme.UmapeTheme  // Usando UmapeTheme consistentemente
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
-            UmapeTheme {
+            UmapeTheme(darkTheme = true) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background

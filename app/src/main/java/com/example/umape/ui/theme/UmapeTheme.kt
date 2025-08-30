@@ -33,4 +33,4 @@ fun UmapeTheme(
         colorScheme = colorScheme,
         content = content
     )
-}
+} 
